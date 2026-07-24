@@ -33,6 +33,7 @@ func NewTFModel(ctx context.Context, projectID string, apiResp *admin.StreamsPri
 		State:                 types.StringPointerValue(apiResp.State),
 		Vendor:                types.StringPointerValue(apiResp.Vendor),
 		Arn:                   types.StringPointerValue(apiResp.Arn),
+		AuthenticationScheme:  types.StringPointerValue(apiResp.AuthenticationScheme),
 	}
 
 	subdomain, diags := types.ListValueFrom(ctx, types.StringType, apiResp.GetDnsSubDomain())
@@ -79,6 +80,9 @@ func NewAtlasReq(ctx context.Context, plan *TFModel) (*admin.StreamsPrivateLinkC
 		if plan.Region.ValueString() != "" {
 			diags.AddError(fmt.Sprintf("region cannot be set for vendor %s", VendorMSK), "")
 		}
+		if plan.AuthenticationScheme.IsNull() || plan.AuthenticationScheme.ValueString() == "" {
+			diags.AddError(fmt.Sprintf("authentication_scheme is required for vendor %s", VendorMSK), "Valid values are TLS and IAM")
+		}
 	}
 
 	if plan.Vendor.ValueString() == VendorS3 {
@@ -114,13 +118,14 @@ func NewAtlasReq(ctx context.Context, plan *TFModel) (*admin.StreamsPrivateLinkC
 	}
 
 	result := &admin.StreamsPrivateLinkConnection{
-		DnsDomain:         plan.DnsDomain.ValueStringPointer(),
-		Provider:          plan.Provider.ValueString(),
-		Region:            plan.Region.ValueStringPointer(),
-		ServiceEndpointId: plan.ServiceEndpointId.ValueStringPointer(),
-		State:             plan.State.ValueStringPointer(),
-		Vendor:            plan.Vendor.ValueStringPointer(),
-		Arn:               plan.Arn.ValueStringPointer(),
+		DnsDomain:            plan.DnsDomain.ValueStringPointer(),
+		Provider:             plan.Provider.ValueString(),
+		Region:               plan.Region.ValueStringPointer(),
+		ServiceEndpointId:    plan.ServiceEndpointId.ValueStringPointer(),
+		State:                plan.State.ValueStringPointer(),
+		Vendor:               plan.Vendor.ValueStringPointer(),
+		Arn:                  plan.Arn.ValueStringPointer(),
+		AuthenticationScheme: plan.AuthenticationScheme.ValueStringPointer(),
 	}
 
 	if !plan.DnsSubDomain.IsNull() {
